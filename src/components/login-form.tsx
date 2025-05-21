@@ -44,6 +44,8 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
     }
   };
 
+  //forgot password
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
@@ -98,7 +100,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <button
-                onClick={onSignupClick} // Trigger the navigation when clicked
+                onClick={onSignupClick} 
                 className="underline underline-offset-4"
               >
                 Sign up
