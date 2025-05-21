@@ -1,20 +1,51 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface LoginFormProps {
   onSignupClick: () => void;
 }
 
 export function LoginForm({ onSignupClick }: LoginFormProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handlesubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:5050/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "login failed");
+      }
+
+      console.log("login successful:", data);
+      localStorage.setItem("token", data.token);
+    } catch (err: any) {
+      setError(err.message);
+      console.error("login error:", err);
+    }
+  };
+
+  //forgot password
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
@@ -25,7 +56,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handlesubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
@@ -33,6 +64,8 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
                   id="email"
                   type="email"
                   placeholder="m@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -46,8 +79,15 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
                   Login
@@ -60,7 +100,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <button
-                onClick={onSignupClick} // Trigger the navigation when clicked
+                onClick={onSignupClick} 
                 className="underline underline-offset-4"
               >
                 Sign up
@@ -70,5 +110,5 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
