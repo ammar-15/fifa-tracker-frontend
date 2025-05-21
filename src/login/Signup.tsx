@@ -7,7 +7,6 @@ function Signup() {
       <div className="w-full max-w-sm">
         <Signup1
           logo={{
-            url: "/",
             src: uclball,
             alt: "Logo",
             title: "FIFA Tracker"
