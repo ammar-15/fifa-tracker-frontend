@@ -1,8 +1,7 @@
 import { FcGoogle } from "react-icons/fc";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
-
 
 interface Signup1Props {
   heading?: string;
@@ -15,23 +14,52 @@ interface Signup1Props {
   signupText?: string;
   googleText?: string;
   loginText?: string;
-  loginUrl?: string;
+  onLoginClick?: () => void;
 }
 
 const Signup1 = ({
   heading = "Signup",
   subheading = "Create a new account",
   logo = {
-    src: "https://shadcnblocks.com/images/block/block-1.svg",
+    src: "",
     alt: "logo",
-    title: "shadcnblocks.com",
+    title: "",
   },
   googleText = "Sign up with Google",
   signupText = "Create an account",
   loginText = "Already have an account?",
-  loginUrl = "/loginpage",
+  onLoginClick,
 }: Signup1Props) => {
-  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handlesubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:5050/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "signup failed");
+      }
+
+      console.log("signup successful:", data);
+      localStorage.setItem("token", data.token);
+    } catch (err: any) {
+      setError(err.message);
+      console.error("signup error:", err);
+    }
+  };
+
+  //google signup tbc
 
   return (
     <section className="h-screen">
@@ -54,12 +82,14 @@ const Signup1 = ({
               <p className="text-sm text-muted-foreground">{subheading}</p>
             )}
           </div>
-          <div className="flex w-full flex-col gap-8">
+          <form className="flex w-full flex-col gap-8" onSubmit={handlesubmit}>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <Input
                   type="email"
                   placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="bg-white"
                 />
@@ -68,10 +98,13 @@ const Signup1 = ({
                 <Input
                   type="password"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="bg-white"
                 />
               </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex flex-col gap-4">
                 <Button type="submit" className="mt-2 w-full">
                   {signupText}
@@ -82,12 +115,12 @@ const Signup1 = ({
                 </Button>
               </div>
             </div>
-          </div>
+          </form>
           <div className="flex justify-center gap-1 text-sm text-muted-foreground">
             <p>{loginText}</p>
             <button
               type="button"
-              onClick={() => navigate(loginUrl)}
+              onClick={onLoginClick}
               className="font-medium text-primary hover:underline bg-transparent border-none p-0 m-0"
               style={{ background: "none", border: "none", cursor: "pointer" }}
             >
