@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -18,9 +19,11 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handlesubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    navigate("/Dashboard");
     setError("");
 
     try {
