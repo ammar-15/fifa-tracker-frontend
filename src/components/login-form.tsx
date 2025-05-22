@@ -111,6 +111,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
               <button
                 onClick={onSignupClick} 
                 className="underline underline-offset-4"
+                style = {{cursor: "pointer" }}
               >
                 Sign up
               </button>
