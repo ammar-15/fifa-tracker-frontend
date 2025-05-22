@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
 import {
   Card,
   CardContent,
@@ -23,7 +24,6 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
 
   const handlesubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/Dashboard");
     setError("");
 
     try {
@@ -38,9 +38,9 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
       if (!res.ok) {
         throw new Error(data.error || "login failed");
       }
-
       console.log("login successful:", data);
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", data.access_token);
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message);
       console.error("login error:", err);
@@ -95,9 +95,15 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
-                <Button variant="outline" className="w-full">
-                  Login with Google
-                </Button>
+                  <GoogleLogin 
+                    onSuccess={(credentialResponse) => {
+                      console.log(credentialResponse);
+                      navigate("/Dashboard");
+                    }}
+                    onError={() => {
+                      console.log("Login Failed");
+                    }}/>
+
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
