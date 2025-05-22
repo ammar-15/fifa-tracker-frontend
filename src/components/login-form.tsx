@@ -98,7 +98,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
                   <GoogleLogin 
                     onSuccess={(credentialResponse) => {
                       console.log(credentialResponse);
-                      navigate("/Dashboard");
+                      navigate("/dashboard");
                     }}
                     onError={() => {
                       console.log("Login Failed");
