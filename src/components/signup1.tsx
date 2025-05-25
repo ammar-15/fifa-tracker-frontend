@@ -59,8 +59,6 @@ const Signup1 = ({
     }
   };
 
-  //google signup tbc
-
   return (
     <section className="h-screen">
       <div className="flex h-full items-center justify-center">
