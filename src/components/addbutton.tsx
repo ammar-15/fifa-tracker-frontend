@@ -31,6 +31,9 @@ export default function AddButton() {
     try {
       const res = await fetch("http://localhost:5050/upload", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
         body: formData,
       });
 

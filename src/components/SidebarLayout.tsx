@@ -18,6 +18,7 @@ import {
   UsersIcon,
   UserIcon,
 } from "lucide-react";
+import { googleLogout } from "@react-oauth/google";
 
 export default function SidebarLayout({
   children,
@@ -26,6 +27,12 @@ export default function SidebarLayout({
 }) {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    googleLogout();
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
   return (
     <SidebarProvider>
       <div className="flex h-screen">
@@ -33,9 +40,10 @@ export default function SidebarLayout({
           {" "}
           <SidebarContent>
             <div className="flex items-center m-2 justify-between gap-2">
-              <div className="text-xl ml-1 group-data-[collapsible=icon]:hidden">Goalzy</div>
+              <div className="text-xl ml-1 group-data-[collapsible=icon]:hidden">
+                Goalzy
+              </div>
               <SidebarTrigger className="my-2 h-5 w-5" />
-              
             </div>
             <SidebarHeader>
               <div className="flex items-center justify-between">
@@ -84,13 +92,15 @@ export default function SidebarLayout({
             </SidebarMenu>
 
             <SidebarFooter className="mt-auto">
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => navigate("/logout")}>
-                  <LogOutIcon className="h-4 w-4" />
-                  <span className="group-data-[collapsible=icon]:hidden">
-                    Logout
-                  </span>
-                </SidebarMenuButton>
+              <SidebarMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer flex flex-row gap-2 items-center bottom-5"
+              >
+                <LogOutIcon className="h-4 w-4" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {" "}
+                  Logout
+                </span>
               </SidebarMenuItem>
             </SidebarFooter>
           </SidebarContent>
