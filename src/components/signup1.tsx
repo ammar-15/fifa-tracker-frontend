@@ -76,6 +76,7 @@ const Signup1 = ({
 
       console.log("signup successful:", data);
       localStorage.setItem("token", data.token);
+      navigate("/dashboard"); 
     } catch (err: any) {
       setError(err.message);
       console.error("signup error:", err);
@@ -87,7 +88,7 @@ const Signup1 = ({
 
     if (!validateUsername(username)) {
       setUsernameError(
-        "Username must contain only lowercase letters and numbers."
+        "username must contain only lowercase letters and numbers."
       );
       return;
     }
@@ -100,6 +101,7 @@ const Signup1 = ({
       });
 
       const data = await res.json();
+      console.log("Google register response:", data);
 
       if (!res.ok) {
         if (data.error?.includes("username")) {

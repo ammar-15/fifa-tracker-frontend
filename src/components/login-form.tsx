@@ -17,7 +17,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSignupClick }: LoginFormProps) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
       const res = await fetch("http://localhost:5050/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
 
       const data = await res.json();
@@ -67,8 +67,8 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
                   id="identifier"
                   type="text"
                   placeholder=""
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
               </div>
