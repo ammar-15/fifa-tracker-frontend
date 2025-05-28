@@ -55,18 +55,18 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your usernsme or email below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlesubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Username or Email</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  id="identifier"
+                  type="text"
+                  placeholder=""
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
