@@ -33,22 +33,42 @@ const Signup1 = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+
+  const validateUsername = (value: string) => {
+    const regex = /^[a-z0-9]+$/;
+    return regex.test(value);
+  };
 
   const handlesubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setUsernameError("");
+
+    if (!validateUsername(username)) {
+      setUsernameError(
+        "Username must contain only lowercase letters and numbers."
+      );
+      return;
+    }
 
     try {
       const res = await fetch("http://localhost:5050/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, username }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "signup failed");
+        if (data.error?.includes("username")) {
+          setUsernameError(data.error);
+        } else {
+          setError(data.error || "signup failed");
+        }
+        return;
       }
 
       console.log("signup successful:", data);
@@ -93,6 +113,17 @@ const Signup1 = ({
                 />
               </div>
               <div className="flex flex-col gap-2">
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="bg-white"
+                />
+                {usernameError && (
+                  <p className="text-red-500 text-sm">{usernameError}</p>
+                )}
                 <Input
                   type="password"
                   placeholder="Password"
