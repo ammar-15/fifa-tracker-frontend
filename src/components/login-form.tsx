@@ -17,7 +17,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSignupClick }: LoginFormProps) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
       const res = await fetch("http://localhost:5050/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
 
       const data = await res.json();
@@ -55,20 +55,20 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your usernsme or email below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlesubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Username or Email</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier"
+                  type="text"
+                  placeholder=""
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
               </div>

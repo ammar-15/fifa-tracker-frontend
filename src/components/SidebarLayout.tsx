@@ -19,6 +19,13 @@ import {
   UserIcon,
 } from "lucide-react";
 import { googleLogout } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  userId: string;
+  username: string;
+  exp: number;
+}
 
 export default function SidebarLayout({
   children,
@@ -26,6 +33,17 @@ export default function SidebarLayout({
   children: React.ReactNode;
 }) {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  let username = "";
+
+  if (token) {
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      username = decoded.username;
+    } catch (err) {
+      console.error("Invalid token:", err);
+    }
+  }
 
   const handleLogout = () => {
     googleLogout();
@@ -50,7 +68,7 @@ export default function SidebarLayout({
                 <div className="flex items-center gap-2">
                   <UserIcon className="h-5 w-5" />
                   <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">
-                    UserName
+                    {username}
                   </span>
                 </div>
               </div>
