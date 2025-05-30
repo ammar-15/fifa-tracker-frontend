@@ -34,16 +34,16 @@ export default function SidebarLayout({
 }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  let username = "";
+let username = "";
 
-  if (token) {
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      username = decoded.username;
-    } catch (err) {
-      console.error("Invalid token:", err);
-    }
+if (token && token !== "undefined") {
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    username = decoded.username;
+  } catch (err) {
+    console.error("Invalid token:", err);
   }
+}
 
   const handleLogout = () => {
     googleLogout();
