@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { googleLogout } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
+import { useState, useEffect } from "react";
 
 interface DecodedToken {
   userId: string;
@@ -34,22 +35,44 @@ export default function SidebarLayout({
 }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-let username = "";
+  let username = "";
 
-if (token && token !== "undefined") {
-  try {
-    const decoded = jwtDecode<DecodedToken>(token);
-    username = decoded.username;
-  } catch (err) {
-    console.error("Invalid token:", err);
+  if (token && token !== "undefined") {
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      username = decoded.username;
+    } catch (err) {
+      console.error("Invalid token:", err);
+    }
   }
-}
 
   const handleLogout = () => {
     googleLogout();
     localStorage.removeItem("token");
     navigate("/");
   };
+
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      try {
+        const res = await fetch("http://localhost:5050/userprofile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile image");
+        const data = await res.json();
+        setProfileImage(data.profilePhoto || null);
+      } catch (err) {
+        console.error("Error fetching profile image:", err);
+        setProfileImage(null);
+      }
+    };
+    if (token && token !== "undefined") {
+      fetchProfileImage();
+    }
+  }, [token]);
 
   return (
     <SidebarProvider>
@@ -63,10 +86,21 @@ if (token && token !== "undefined") {
               </div>
               <SidebarTrigger className="my-2 h-5 w-5" />
             </div>
-            <SidebarHeader>
+            <SidebarHeader
+              onClick={() => navigate("/user")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5" />
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserIcon className="h-5 w-5" />
+                  )}
                   <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">
                     {username}
                   </span>
