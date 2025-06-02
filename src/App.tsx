@@ -5,6 +5,7 @@ import Dashboard from "./screens/Dashboard";
 import Analytics from "./screens/Analytics";
 import Matches from "./screens/Matches";
 import Friends from "./screens/Friends";
+import User from "./screens/User";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/matches" element={<Matches />} />
             <Route path="/friends" element={<Friends />} />
+            <Route path="/user" element={<User />} />
             <Route path="/analytics" element={<Analytics />} />
           </Routes>
         </div>
