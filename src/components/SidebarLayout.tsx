@@ -20,10 +20,12 @@ import {
 } from "lucide-react";
 import { googleLogout } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
+import { useState, useEffect } from "react";
 
 interface DecodedToken {
   userId: string;
   username: string;
+  email: string;
   exp: number;
 }
 
@@ -36,7 +38,7 @@ export default function SidebarLayout({
   const token = localStorage.getItem("token");
   let username = "";
 
-  if (token) {
+  if (token && token !== "undefined") {
     try {
       const decoded = jwtDecode<DecodedToken>(token);
       username = decoded.username;
@@ -51,6 +53,43 @@ export default function SidebarLayout({
     navigate("/");
   };
 
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  
+
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token || token === "undefined") return;
+
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const userEmail = decoded.email;
+
+        const res = await fetch(
+          `http://localhost:5050/userprofile?email=${userEmail}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to get profile photo");
+
+        const data = await res.json();
+        setProfileImage(data.user.profilePhoto || null);
+        console.log("Sidebar profile image:", data.user.profilePhoto);
+      } catch (err) {
+        console.error("Error getting profile image:", err);
+        setProfileImage(null);
+      }
+    };
+
+    fetchProfileImage();
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex h-screen">
@@ -63,10 +102,21 @@ export default function SidebarLayout({
               </div>
               <SidebarTrigger className="my-2 h-5 w-5" />
             </div>
-            <SidebarHeader>
+            <SidebarHeader
+              onClick={() => navigate("/user")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5" />
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserIcon className="h-5 w-5" />
+                  )}
                   <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">
                     {username}
                   </span>

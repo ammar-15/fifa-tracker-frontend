@@ -2,6 +2,10 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Loginpage from "./login/Loginpage";
 import Signup from "./login/Signup";
 import Dashboard from "./screens/Dashboard";
+import Analytics from "./screens/Analytics";
+import Matches from "./screens/Matches";
+import Friends from "./screens/Friends";
+import User from "./screens/User";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 function App() {
@@ -13,6 +17,10 @@ function App() {
             <Route path="/" element={<Loginpage />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/matches" element={<Matches />} />
+            <Route path="/friends" element={<Friends />} />
+            <Route path="/user" element={<User />} />
+            <Route path="/analytics" element={<Analytics />} />
           </Routes>
         </div>
       </Router>
