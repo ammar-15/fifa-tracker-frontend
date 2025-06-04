@@ -5,12 +5,21 @@ import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import Dropzone from "react-dropzone";
 import { Pencil } from "lucide-react";
+import {jwtDecode} from "jwt-decode";
 
 interface UserProfileData {
   username: string;
   email: string;
   profilePhoto: string; 
 }
+
+interface DecodedToken {
+  userId: string;
+  username: string;
+  email: string;
+  exp: number;
+}
+
 
 export default function UserProfile() {
   const [data, setData] = useState<UserProfileData | null>(null);
@@ -20,16 +29,29 @@ export default function UserProfile() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("http://localhost:5050/userprofile", {
+  const token = localStorage.getItem("token");
+
+  if (!token || token === "undefined") return;
+
+  try {
+    const decoded = jwtDecode<DecodedToken>(token); 
+    const userEmail = decoded.email;
+
+    fetch(`http://localhost:5050/userprofile?email=${userEmail}`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then(res => res.json())
-      .then(setData)
+      .then(json => {
+         console.log("Fetched user profile:", json);
+         setData(json.user);})
       .catch(console.error);
-  }, []);
+  } catch (err) {
+    console.error("Invalid token:", err);
+  }
+}, []);
 
   const handleSave = async () => {
     const token = localStorage.getItem("token");
@@ -58,7 +80,7 @@ export default function UserProfile() {
       <div className="relative w-24 h-24 mx-auto rounded-full overflow-hidden border border-gray-300">
         {data?.profilePhoto ? (
           <img
-            src={data.profilePhoto}
+            src={data?.profilePhoto}
             alt="Profile"
             className="w-full h-full object-cover"
           />

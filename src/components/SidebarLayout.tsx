@@ -25,6 +25,7 @@ import { useState, useEffect } from "react";
 interface DecodedToken {
   userId: string;
   username: string;
+  email: string;
   exp: number;
 }
 
@@ -53,26 +54,41 @@ export default function SidebarLayout({
   };
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  
+
   useEffect(() => {
     const fetchProfileImage = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token || token === "undefined") return;
+
       try {
-        const res = await fetch("http://localhost:5050/userprofile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) throw new Error("Failed to fetch profile image");
+        const decoded = jwtDecode<DecodedToken>(token);
+        const userEmail = decoded.email;
+
+        const res = await fetch(
+          `http://localhost:5050/userprofile?email=${userEmail}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to get profile photo");
+
         const data = await res.json();
-        setProfileImage(data.profilePhoto || null);
+        setProfileImage(data.user.profilePhoto || null);
+        console.log("Sidebar profile image:", data.user.profilePhoto);
       } catch (err) {
-        console.error("Error fetching profile image:", err);
+        console.error("Error getting profile image:", err);
         setProfileImage(null);
       }
     };
-    if (token && token !== "undefined") {
-      fetchProfileImage();
-    }
-  }, [token]);
+
+    fetchProfileImage();
+  }, []);
 
   return (
     <SidebarProvider>
