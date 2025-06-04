@@ -160,6 +160,9 @@ export default function UserProfile() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
+          <Button onClick={handleSave} className="mt-4">
+            Save Password
+          </Button>
         </DialogContent>
       </Dialog>
 
