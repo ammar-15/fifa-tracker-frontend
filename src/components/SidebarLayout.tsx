@@ -54,7 +54,6 @@ export default function SidebarLayout({
   };
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  
 
   useEffect(() => {
     const fetchProfileImage = async () => {
@@ -91,7 +90,7 @@ export default function SidebarLayout({
   }, []);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen">
         <Sidebar side="left" collapsible="icon">
           {" "}

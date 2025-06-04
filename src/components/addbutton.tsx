@@ -5,9 +5,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 export default function AddButton() {
@@ -38,7 +38,7 @@ export default function AddButton() {
       });
 
       if (!res.ok) throw new Error("upload failed");
-
+      console.log("upload successful");
       setOpen(false);
       setFile(null);
     } catch (err) {
@@ -48,29 +48,39 @@ export default function AddButton() {
     }
   };
 
-  return (
+ return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="default">Add Match</Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Upload Image</DialogTitle>
-          <DialogDescription>Use JPG or PNG files only</DialogDescription>
+          <DialogTitle>Upload New Match Screenshot</DialogTitle>
         </DialogHeader>
-        <input
-          type="file"
-          accept="image/png, image/jpeg"
-          onChange={handleFileChange}
-          className="mt-2"
-          style={{ cursor: "pointer" }}
-        />{" "}
-        <DialogFooter className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleUpload} disabled={uploading || !file}>
-            {uploading ? "Uploading..." : "Upload"}
+
+        <label
+          htmlFor="file-upload"
+          className={cn(
+            "border border-dashed border-gray-400 rounded-md px-4 py-10 text-center text-sm text-muted-foreground",
+            "hover:bg-muted cursor-pointer transition-all"
+          )}
+        >
+          {file ? file.name : "Drag or click to select a photo"}
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/png, image/jpeg"
+            onChange={handleFileChange}
+            className="hidden" 
+          />
+        </label>
+        <DialogFooter className="pt-4">
+          <Button
+            onClick={handleUpload}
+            disabled={uploading || !file}
+            className="w-full bg-black text-white hover:bg-black/80"
+          >
+            {uploading ? "Uploading..." : "Confirm Upload"}
           </Button>
         </DialogFooter>
       </DialogContent>
