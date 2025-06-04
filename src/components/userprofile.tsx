@@ -57,6 +57,7 @@ export default function UserProfile() {
     const token = localStorage.getItem("token");
     const formData = new FormData();
 
+    formData.append("email", data?.email || "");
     formData.append("username", username || data?.username || "");
     if (newPassword) formData.append("password", newPassword);
 
@@ -66,7 +67,7 @@ export default function UserProfile() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      alert("Profile updated!");
+      console.log("Profile updated!");
     } catch (err) {
       console.error(err);
       alert("Update failed");
