@@ -1,9 +1,18 @@
+import SidebarLayout from "@/components/SidebarLayout";
+import AddButton from "@/components/addbutton";
+import MatchTable from "@/components/match-table";
+
 const Matches = () => {
-    return (
-        <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-2xl font-bold">Matches</h1>
-        <p className="mt-4 text-gray-600">This is the Matches screen.</p>
-        </div>
-    )
-    }   
+  return (
+    <SidebarLayout>
+      <h1 className="text-4xl font-bold mb-4">Matches</h1>
+      <div className="mt-5">
+        <MatchTable></MatchTable>
+      </div>
+      <div className="fixed bottom-10 right-12 z-50">
+        <AddButton />
+      </div>
+    </SidebarLayout>
+  );
+};
 export default Matches;
