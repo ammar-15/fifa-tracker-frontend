@@ -20,6 +20,11 @@ interface ParsedResult {
   stats: ParsedStat[];
 }
 
+interface StatsTableProps {
+  data: ParsedResult;
+}
+
+
 const statsList = [
   "Possession",
   "Shots",
@@ -38,8 +43,17 @@ const statsList = [
   "Red Cards",
 ];
 
-export default function StatsTable() {
+export default function StatsTable({ data }: StatsTableProps) {
   const [formData, setFormData] = useState<ParsedResult | null>(null);
+
+  useEffect(() => {
+    const completeStats = statsList.map((stat) => {
+      const match = data.stats.find((s) => s.stat === stat);
+      return match || { stat, left: "", right: "" };
+    });
+
+    setFormData({ ...data, stats: completeStats });
+  }, [data]);
 
   useEffect(() => {
     const fetchParsed = async () => {
@@ -92,7 +106,7 @@ export default function StatsTable() {
 
     try {
       const res = await fetch("http://localhost:5050/savedata", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, uniqueid }),
       });
