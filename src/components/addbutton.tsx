@@ -56,7 +56,7 @@ export default function AddButton() {
       <DialogTrigger asChild>
         <Button variant="default">Add Match</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="w-full !max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {uploading
