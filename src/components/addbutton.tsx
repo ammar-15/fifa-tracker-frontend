@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import LoadingScreen from "@/components/loading-screen";
 import StatsTable from "@/components/stats-table";
+import { jwtDecode } from "jwt-decode";
 
 interface ParsedStat {
   stat: string;
@@ -34,6 +35,17 @@ export default function AddButton() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [parsedStats, setParsedStats] = useState<ParsedResult | null>(null);
+
+  let loggedInUsername = "";
+const token = localStorage.getItem("token");
+if (token && token !== "undefined") {
+  try {
+    const decoded = jwtDecode<{ username: string }>(token);
+    loggedInUsername = decoded.username;
+  } catch (err) {
+    console.error("Invalid token:", err);
+  }
+}
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -109,7 +121,8 @@ export default function AddButton() {
         {uploading ? (
           <LoadingScreen />
         ) : parsedStats ? (
-          <StatsTable data={parsedStats} />
+          <StatsTable setOpen={setOpen} loggedInUsername={loggedInUsername} />
+
         ) : (
           <>
             <label
