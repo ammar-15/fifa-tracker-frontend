@@ -2,6 +2,13 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 interface ParsedStat {
   stat: string;
@@ -21,9 +28,9 @@ interface ParsedResult {
 }
 
 interface StatsTableProps {
-  data: ParsedResult;
+  setOpen: (value: boolean) => void;
+  loggedInUsername: string;
 }
-
 
 const statsList = [
   "Possession",
@@ -43,37 +50,50 @@ const statsList = [
   "Red Cards",
 ];
 
-export default function StatsTable({ data }: StatsTableProps) {
+export default function StatsTable({ loggedInUsername }: StatsTableProps) {
   const [formData, setFormData] = useState<ParsedResult | null>(null);
+  const [friends, setFriends] = useState<string[]>([]);
 
   useEffect(() => {
-    const completeStats = statsList.map((stat) => {
-      const match = data.stats.find((s) => s.stat === stat);
-      return match || { stat, left: "", right: "" };
-    });
+    const fetchData = async () => {
+      try {
+        const parsedRes = await fetch("http://localhost:5050/parsed");
+        const parsedJson = await parsedRes.json();
+        const parsed = parsedJson.data as ParsedResult;
 
-    setFormData({ ...data, stats: completeStats });
-  }, [data]);
+        if (parsedJson.uniqueid) {
+          localStorage.setItem("uniqueid", parsedJson.uniqueid);
+        }
 
-  useEffect(() => {
-    const fetchParsed = async () => {
-      const res = await fetch("http://localhost:5050/parsed");
-      const json = await res.json();
-      const raw: ParsedResult = json.data;
+        const completeStats = statsList.map((stat) => {
+          const match = parsed.stats.find((s) => s.stat === stat);
+          return match || { stat, left: "", right: "" };
+        });
 
-      if (json.uniqueid) {
-        localStorage.setItem("uniqueid", json.uniqueid);
+        setFormData({
+          ...parsed,
+          stats: completeStats,
+          username: loggedInUsername,
+        });
+      } catch (err) {
+        console.error("Error fetching parsed data:", err);
       }
 
-      const completeStats = statsList.map((stat) => {
-        const match = raw.stats.find((s) => s.stat === stat);
-        return match || { stat, left: "", right: "" };
-      });
-
-      setFormData({ ...raw, stats: completeStats });
+      try {
+        const friendsRes = await fetch("http://localhost:5050/friendusernames");
+        const friendsJson = await friendsRes.json();
+        if (Array.isArray(friendsJson)) {
+          setFriends(friendsJson);
+        } else {
+          console.warn("Unexpected friends API response:", friendsJson);
+        }
+      } catch (err) {
+        console.error("Failed to fetch friends:", err);
+      }
     };
-    fetchParsed();
-  }, []);
+
+    fetchData();
+  }, [loggedInUsername]);
 
   const handleFieldChange = (field: keyof ParsedResult, value: string) => {
     if (formData) {
@@ -98,7 +118,6 @@ export default function StatsTable({ data }: StatsTableProps) {
     if (!formData) return;
 
     const uniqueid = localStorage.getItem("uniqueid");
-
     if (!uniqueid) {
       console.error("Unique ID not found in localStorage");
       return;
@@ -111,14 +130,15 @@ export default function StatsTable({ data }: StatsTableProps) {
         body: JSON.stringify({ ...formData, uniqueid }),
       });
 
-      const data = await res.json();
-      console.log("Save response:", data);
-      alert("Data saved successfully!");
+      const responseJson = await res.json();
+      console.log("Save response:", responseJson);
     } catch (err) {
       console.error("Error saving data:", err);
       alert("Failed to save data");
     }
   };
+
+  if (!formData) return <div className="text-center py-4">Loading...</div>;
 
   return (
     <div className="max-w-5xl mx-auto py-4 flex flex-col md:flex-row gap-8">
@@ -126,28 +146,30 @@ export default function StatsTable({ data }: StatsTableProps) {
         <div className="flex gap-4">
           <Input
             placeholder="Username (Team 1)"
-            value={formData?.username ?? ""}
+            value={formData.username}
             onChange={(e) => handleFieldChange("username", e.target.value)}
             className="flex-1"
           />
-          <Input
-            placeholder="Username (Team 2)"
-            value={formData?.oppUsername ?? ""}
+          <select
+            value={formData.oppUsername}
             onChange={(e) => handleFieldChange("oppUsername", e.target.value)}
-            className="flex-1"
-          />
+            className="flex-1 border rounded px-2 py-1 text-sm"
+          >
+            <option value="">Select Opponent</option>
+            <option value="akuul15">akuul15</option>
+          </select>
         </div>
 
         <div className="flex gap-4">
           <Input
             placeholder="Team Name 1"
-            value={formData?.team1 ?? ""}
+            value={formData.team1}
             onChange={(e) => handleFieldChange("team1", e.target.value)}
             className="flex-1"
           />
           <Input
             placeholder="Team Name 2"
-            value={formData?.team2 ?? ""}
+            value={formData.team2}
             onChange={(e) => handleFieldChange("team2", e.target.value)}
             className="flex-1"
           />
@@ -156,13 +178,13 @@ export default function StatsTable({ data }: StatsTableProps) {
         <div className="flex gap-4">
           <Input
             placeholder="Goals Team 1"
-            value={formData?.team1Goals ?? ""}
+            value={formData.team1Goals}
             onChange={(e) => handleFieldChange("team1Goals", e.target.value)}
             className="flex-1"
           />
           <Input
             placeholder="Goals Team 2"
-            value={formData?.team2Goals ?? ""}
+            value={formData.team2Goals}
             onChange={(e) => handleFieldChange("team2Goals", e.target.value)}
             className="flex-1"
           />
@@ -171,7 +193,7 @@ export default function StatsTable({ data }: StatsTableProps) {
         <div className="flex justify-center">
           <Input
             placeholder="Time Played"
-            value={formData?.timePlayed ?? ""}
+            value={formData.timePlayed}
             onChange={(e) => handleFieldChange("timePlayed", e.target.value)}
             className="w-40 text-center"
           />
@@ -182,7 +204,7 @@ export default function StatsTable({ data }: StatsTableProps) {
         <Table className="w-full">
           <TableBody>
             {statsList.map((stat, i) => {
-              const matched = formData?.stats.find((s) => s.stat === stat);
+              const matched = formData.stats.find((s) => s.stat === stat);
               return (
                 <TableRow key={i} className="h-10">
                   <TableCell className="text-center w-1/4 p-1">
@@ -212,13 +234,15 @@ export default function StatsTable({ data }: StatsTableProps) {
               );
             })}
           </TableBody>
+        </Table>
+        <div className="flex justify-end mt-4">
           <Button
             onClick={handleSave}
-            className="bg-black text-white hover:bg-black/80 w-fit"
+            className="bg-black text-white hover:bg-black/80"
           >
             Save
           </Button>
-        </Table>
+        </div>
       </div>
     </div>
   );
