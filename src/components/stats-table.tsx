@@ -157,6 +157,7 @@ export default function StatsTable({ loggedInUsername }: StatsTableProps) {
           >
             <option value="">Select Opponent</option>
             <option value="akuul15">akuul15</option>
+            <option value="ammarosborn">ammarosborn</option>
           </select>
         </div>
 
