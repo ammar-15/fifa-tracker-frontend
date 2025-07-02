@@ -11,12 +11,41 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import LoadingScreen from "@/components/loading-screen";
 import StatsTable from "@/components/stats-table";
+import { jwtDecode } from "jwt-decode";
+
+interface ParsedStat {
+  stat: string;
+  left: string;
+  right: string;
+}
+
+interface ParsedResult {
+  username: string;
+  oppUsername: string;
+  team1: string;
+  team1Goals: string;
+  team2: string;
+  team2Goals: string;
+  timePlayed: string;
+  stats: ParsedStat[];
+}
 
 export default function AddButton() {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [showStats, setShowStats] = useState(false);
+  const [parsedStats, setParsedStats] = useState<ParsedResult | null>(null);
+
+  let loggedInUsername = "";
+const token = localStorage.getItem("token");
+if (token && token !== "undefined") {
+  try {
+    const decoded = jwtDecode<{ username: string }>(token);
+    loggedInUsername = decoded.username;
+  } catch (err) {
+    console.error("Invalid token:", err);
+  }
+}
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -24,13 +53,16 @@ export default function AddButton() {
       setFile(selectedFile);
     }
   };
+
   const handleUpload = async () => {
     if (!file) return;
+
+    setUploading(true);
+    setParsedStats(null);
 
     const formData = new FormData();
     formData.append("image", file);
 
-    setUploading(true);
     try {
       const res = await fetch("http://localhost:5050/upload", {
         method: "POST",
@@ -40,12 +72,31 @@ export default function AddButton() {
         body: formData,
       });
 
-      if (!res.ok) throw new Error("upload failed");
-      console.log("upload successful");
-      setShowStats(true);
+      if (!res.ok) throw new Error("Upload failed");
+
+      console.log("Upload successful");
+
+      await new Promise((resolve) => setTimeout(resolve, 4000)); 
+
+      const statsRes = await fetch("http://localhost:5050/parsed", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!statsRes.ok) throw new Error("Stats fetch failed");
+
+      const json = await statsRes.json();
+      setParsedStats(json.data); 
+
+      if (json.uniqueid) {
+        localStorage.setItem("uniqueid", json.uniqueid);
+      }
+
       setFile(null);
     } catch (err) {
-      console.error("error uploading:", err);
+      console.error("Error:", err);
+      alert("Something went wrong while uploading or fetching stats.");
     } finally {
       setUploading(false);
     }
@@ -61,7 +112,7 @@ export default function AddButton() {
           <DialogTitle>
             {uploading
               ? "Uploading..."
-              : showStats
+              : parsedStats
               ? "Match Stats"
               : "Upload New Match Screenshot"}
           </DialogTitle>
@@ -69,8 +120,9 @@ export default function AddButton() {
 
         {uploading ? (
           <LoadingScreen />
-        ) : showStats ? (
-          <StatsTable />
+        ) : parsedStats ? (
+          <StatsTable setOpen={setOpen} loggedInUsername={loggedInUsername} />
+
         ) : (
           <>
             <label
