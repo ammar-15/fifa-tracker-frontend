@@ -1,7 +1,17 @@
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import MatchStatsTable from "./matchstats-table";
 import { jwtDecode } from "jwt-decode";
@@ -31,6 +41,7 @@ export default function MatchTable() {
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [decodedUsername, setDecodedUsername] = useState("");
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -46,6 +57,7 @@ export default function MatchTable() {
       try {
         const decoded = jwtDecode<DecodedToken>(token);
         username = decoded.username;
+        setDecodedUsername(decoded.username);
       } catch (err) {
         console.error("Failed to decode token", err);
         setLoading(false);
@@ -53,7 +65,9 @@ export default function MatchTable() {
       }
 
       try {
-        const response = await fetch(`http://localhost:5050/matchdata?username=${username}`);
+        const response = await fetch(
+          `http://localhost:5050/matchdata?username=${username}`
+        );
         const data = await response.json();
         console.log("Fetched matches:", data);
         setMatches(data);
@@ -82,27 +96,38 @@ export default function MatchTable() {
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center">Loading...</TableCell>
+              <TableCell colSpan={4} className="text-center">
+                Loading...
+              </TableCell>
             </TableRow>
           ) : matches.length > 0 ? (
-            matches.map((match) => (
-              <TableRow
-                key={match.uniqueid}
-                className="cursor-pointer hover:bg-muted"
-                onClick={() => {
-                  setSelectedMatch(match);
-                  setDialogOpen(true);
-                }}
-              >
-                <TableCell>{new Date(match.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>{`${match.team1} vs ${match.team2}`}</TableCell>
-                <TableCell>{`${match.team1Goals} - ${match.team2Goals}`}</TableCell>
-                <TableCell>{match.oppUsername}</TableCell>
-              </TableRow>
-            ))
+            matches.map((match) => {
+              const isUserOpp = match.oppUsername === decodedUsername;
+              const opponent = isUserOpp ? match.username : match.oppUsername;
+
+              return (
+                <TableRow
+                  key={match.uniqueid}
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => {
+                    setSelectedMatch(match);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <TableCell>
+                    {new Date(match.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{`${match.team1} vs ${match.team2}`}</TableCell>
+                  <TableCell>{`${match.team1Goals} - ${match.team2Goals}`}</TableCell>
+                  <TableCell>{opponent}</TableCell>
+                </TableRow>
+              );
+            })
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="text-center">No matches found.</TableCell>
+              <TableCell colSpan={4} className="text-center">
+                No matches found.
+              </TableCell>
             </TableRow>
           )}
         </TableBody>
