@@ -30,22 +30,26 @@ interface ParsedResult {
   stats: ParsedStat[];
 }
 
-export default function AddButton() {
+export default function AddButton({
+  onSaveSuccess,
+}: {
+  onSaveSuccess: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [parsedStats, setParsedStats] = useState<ParsedResult | null>(null);
 
   let loggedInUsername = "";
-const token = localStorage.getItem("token");
-if (token && token !== "undefined") {
-  try {
-    const decoded = jwtDecode<{ username: string }>(token);
-    loggedInUsername = decoded.username;
-  } catch (err) {
-    console.error("Invalid token:", err);
+  const token = localStorage.getItem("token");
+  if (token && token !== "undefined") {
+    try {
+      const decoded = jwtDecode<{ username: string }>(token);
+      loggedInUsername = decoded.username;
+    } catch (err) {
+      console.error("Invalid token:", err);
+    }
   }
-}
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -76,7 +80,7 @@ if (token && token !== "undefined") {
 
       console.log("Upload successful");
 
-      await new Promise((resolve) => setTimeout(resolve, 4000)); 
+      await new Promise((resolve) => setTimeout(resolve, 4000));
 
       const statsRes = await fetch("http://localhost:5050/parsed", {
         headers: {
@@ -87,7 +91,7 @@ if (token && token !== "undefined") {
       if (!statsRes.ok) throw new Error("Stats fetch failed");
 
       const json = await statsRes.json();
-      setParsedStats(json.data); 
+      setParsedStats(json.data);
 
       if (json.uniqueid) {
         localStorage.setItem("uniqueid", json.uniqueid);
@@ -121,8 +125,11 @@ if (token && token !== "undefined") {
         {uploading ? (
           <LoadingScreen />
         ) : parsedStats ? (
-          <StatsTable setOpen={setOpen} loggedInUsername={loggedInUsername} />
-
+          <StatsTable
+            setOpen={setOpen}
+            loggedInUsername={loggedInUsername}
+            onSaveSuccess={onSaveSuccess}
+          />
         ) : (
           <>
             <label
