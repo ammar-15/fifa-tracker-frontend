@@ -7,6 +7,7 @@ import Matches from "./screens/Matches";
 import Friends from "./screens/Friends";
 import User from "./screens/User";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+      <Toaster richColors position="top-right" />
     </GoogleOAuthProvider>
   );
 }
