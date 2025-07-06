@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner"; 
 import { jwtDecode } from "jwt-decode";
 
 interface User {
@@ -47,7 +48,7 @@ export default function AddFriendSearch() {
 
   const sendRequest = async (toUsername: string) => {
     if (!fromUsername) {
-      console.error("User not logged in or token invalid");
+      toast.error("User not logged in or token invalid");
       return;
     }
 
@@ -61,14 +62,20 @@ export default function AddFriendSearch() {
     try {
       data = await res.json();
     } catch {
-      console.error("Server response was not valid JSON");
+      toast.error("Server response was not valid JSON");
       return;
     }
 
     if (!res.ok) {
-      console.error("Friend request error:", data);
+      if (data.error === "Already sent") {
+        toast("Friend request already sent!", {
+          description: `You've already sent a request to @${toUsername}`,
+        });
+      } else {
+        toast.error(data.error || "Failed to send friend request.");
+      }
     } else {
-      console.log("Friend request sent:", data);
+      toast.success("Friend request sent!");
     }
   };
 
