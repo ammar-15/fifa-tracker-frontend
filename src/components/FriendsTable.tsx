@@ -1,7 +1,25 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import BinIcon from "@/assets/bin.svg";
 
 interface User {
   username: string;
@@ -11,6 +29,7 @@ interface User {
 export default function FriendsTable() {
   const [friends, setFriends] = useState<User[]>([]);
   const [username, setUsername] = useState<string | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<User | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -27,11 +46,30 @@ export default function FriendsTable() {
   const fetchFriends = async () => {
     if (!username) return;
     try {
-      const res = await fetch(`http://localhost:5050/friends?username=${username}`);
+      const res = await fetch(
+        `http://localhost:5050/friends?username=${username}`
+      );
       const data = await res.json();
       setFriends(data.friends);
     } catch (error) {
       toast.error("Failed to fetch friends");
+    }
+  };
+
+  const deleteFriend = async (friendEmail: string) => {
+    try {
+      const res = await fetch(`http://localhost:5050/friends/remove`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email: friendEmail }),
+      });
+
+      if (!res.ok) throw new Error("Failed to remove friend");
+
+      toast.success("Friend removed");
+      fetchFriends(); // refresh list
+    } catch (err) {
+      toast.error("Could not remove friend");
     }
   };
 
@@ -54,6 +92,35 @@ export default function FriendsTable() {
             <TableRow key={friend.email}>
               <TableCell>{friend.username}</TableCell>
               <TableCell>{friend.email}</TableCell>
+              <TableCell className="text-right">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <img
+                      src={BinIcon}
+                      alt="Delete"
+                      className="w-5 h-5 cursor-pointer ml-auto rounded hover:bg-gray-200 transition"
+                      onClick={() => setSelectedFriend(friend)}
+                    />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Remove {selectedFriend?.username} from your friends?
+                      </AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() =>
+                          selectedFriend && deleteFriend(selectedFriend.email)
+                        }
+                      >
+                        Confirm
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
