@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
+import BinIcon from "@/assets/bin.svg";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -19,7 +20,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import BinIcon from "@/assets/bin.svg";
 
 interface User {
   username: string;
@@ -43,18 +43,6 @@ export default function FriendsTable() {
     }
   }, []);
 
-  const fetchFriends = async () => {
-    if (!username) return;
-    try {
-      const res = await fetch(
-        `http://localhost:5050/friends?username=${username}`
-      );
-      const data = await res.json();
-      setFriends(data.friends);
-    } catch (error) {
-      toast.error("Failed to fetch friends");
-    }
-  };
 
   const deleteFriend = async (friendEmail: string) => {
     try {
@@ -67,9 +55,22 @@ export default function FriendsTable() {
       if (!res.ok) throw new Error("Failed to remove friend");
 
       toast.success("Friend removed");
-      fetchFriends(); // refresh list
+      fetchFriends(); 
     } catch (err) {
       toast.error("Could not remove friend");
+    }
+  };
+
+  const fetchFriends = async () => {
+    if (!username) return;
+    try {
+      const res = await fetch(
+        `http://localhost:5050/friends?username=${username}`
+      );
+      const data = await res.json();
+      setFriends(data.friends);
+    } catch (error) {
+      toast.error("Failed to fetch friends");
     }
   };
 
