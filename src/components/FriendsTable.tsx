@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
 import BinIcon from "@/assets/bin.svg";
@@ -26,26 +26,20 @@ interface User {
   email: string;
 }
 
-export default function FriendsTable() {
-  const [friends, setFriends] = useState<User[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
+interface FriendsTableProps {
+  friends: User[];
+  refreshFriends: () => void;
+}
+
+export default function FriendsTable({ friends, refreshFriends }: FriendsTableProps) {
   const [selectedFriend, setSelectedFriend] = useState<User | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token && token !== "undefined") {
-      try {
-        const decoded = jwtDecode<{ username: string }>(token);
-        setUsername(decoded.username);
-      } catch (err) {
-        console.error("Failed to decode token:", err);
-      }
-    }
-  }, []);
-
 
   const deleteFriend = async (friendEmail: string) => {
     try {
+      const token = localStorage.getItem("token");
+      const decoded = jwtDecode<{ username: string }>(token!);
+      const username = decoded.username;
+
       const res = await fetch(`http://localhost:5050/friends/remove`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,28 +49,11 @@ export default function FriendsTable() {
       if (!res.ok) throw new Error("Failed to remove friend");
 
       toast.success("Friend removed");
-      fetchFriends(); 
+      refreshFriends();
     } catch (err) {
       toast.error("Could not remove friend");
     }
   };
-
-  const fetchFriends = async () => {
-    if (!username) return;
-    try {
-      const res = await fetch(
-        `http://localhost:5050/friends?username=${username}`
-      );
-      const data = await res.json();
-      setFriends(data.friends);
-    } catch (error) {
-      toast.error("Failed to fetch friends");
-    }
-  };
-
-  useEffect(() => {
-    fetchFriends();
-  }, [username]);
 
   return (
     <>

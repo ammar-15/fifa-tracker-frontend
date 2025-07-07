@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
 
 interface FriendRequest {
@@ -17,22 +16,13 @@ interface FriendRequest {
   username: string;
   email: string;
 }
+interface FriendRequestsTableProps {
+  username: string | null;
+  refreshFriends: () => void;
+}
 
-export default function FriendRequestsTable() {
+export default function FriendRequestsTable({ username, refreshFriends }: FriendRequestsTableProps) {
   const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token && token !== "undefined") {
-    try {
-      const decoded = jwtDecode<{ username: string }>(token);
-      setUsername(decoded.username);
-    } catch (err) {
-      console.error("Failed to decode token:", err);
-    }
-  }
-}, []);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -40,11 +30,9 @@ export default function FriendRequestsTable() {
       try {
         const res = await fetch(`http://localhost:5050/friends?username=${username}`);
         const data = await res.json();
-        console.log("Friend requests fetched:", data.requests);
         setRequests(data.requests);
       } catch (error) {
         toast.error("Failed to load friend requests");
-        console.error("Error fetching friend requests:", error);
       }
     };
 
@@ -61,9 +49,9 @@ export default function FriendRequestsTable() {
       });
       toast.success("Friend request accepted");
       setRequests((prev) => prev.filter((req) => req.email !== email));
+      refreshFriends();
     } catch (error) {
       toast.error("Error accepting request");
-      console.error(error);
     }
   };
 
