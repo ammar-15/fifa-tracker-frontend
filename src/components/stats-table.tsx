@@ -30,6 +30,7 @@ interface ParsedResult {
 interface StatsTableProps {
   setOpen: (value: boolean) => void;
   loggedInUsername: string;
+  onSaveSuccess: () => void;
 }
 
 const statsList = [
@@ -50,7 +51,11 @@ const statsList = [
   "Red Cards",
 ];
 
-export default function StatsTable({ loggedInUsername }: StatsTableProps) {
+export default function StatsTable({
+  setOpen,
+  loggedInUsername,
+  onSaveSuccess,
+}: StatsTableProps) {
   const [formData, setFormData] = useState<ParsedResult | null>(null);
   const [friends, setFriends] = useState<string[]>([]);
 
@@ -132,13 +137,15 @@ export default function StatsTable({ loggedInUsername }: StatsTableProps) {
 
       const responseJson = await res.json();
       console.log("Save response:", responseJson);
+      setOpen(false);
+      onSaveSuccess();
     } catch (err) {
       console.error("Error saving data:", err);
       alert("Failed to save data");
     }
   };
 
-  if (!formData) return <div className="text-center py-4">Loading...</div>;
+  if (!formData) return <div className="text-center py-4">Scanning...</div>;
 
   return (
     <div className="max-w-5xl mx-auto py-4 flex flex-col md:flex-row gap-8">
