@@ -1,15 +1,13 @@
 import SidebarLayout from "../components/SidebarLayout";
-import AddButton from "@/components/addbutton";
+import AnalyticsGrouped from "../components/analytics/AnalyticsGrouped";
 
-const Analytics = () => {
+export default function Analytics() {
   return (
     <SidebarLayout>
-      <h1 className="text-4xl font-bold mb-4">Analytics</h1>
-      <p className="text-lg">Analytics page content goes here.</p>
-      <div className="fixed bottom-10 right-12 z-50">
-        <AddButton />
+      <div className="w-100% px-4">
+        <h1 className="text-4xl font-bold mb-4">Analytics</h1>
+        <AnalyticsGrouped />
       </div>
     </SidebarLayout>
   );
-};
-export default Analytics;
+}
