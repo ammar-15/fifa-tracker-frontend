@@ -71,21 +71,24 @@ export default function MatchStatsTable({
 
   const handleSave = async () => {
     try {
-      const response = await fetch("http://localhost:5050/matchdata/savedata", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uniqueid: formData.uniqueid,
-          stats: formData.stats,
-          username: formData.username,
-          oppUsername: formData.oppUsername,
-          team1: formData.team1,
-          team1Goals: formData.team1Goals,
-          team2: formData.team2,
-          team2Goals: formData.team2Goals,
-          timePlayed: formData.timePlayed,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5050/matchdata/updatedata",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uniqueid: formData.uniqueid,
+            stats: formData.stats,
+            username: formData.username,
+            oppUsername: formData.oppUsername,
+            team1: formData.team1,
+            team1Goals: formData.team1Goals,
+            team2: formData.team2,
+            team2Goals: formData.team2Goals,
+            timePlayed: formData.timePlayed,
+          }),
+        }
+      );
 
       const data = await response.json();
       console.log("Save response:", data);

@@ -43,42 +43,42 @@ export default function MatchTable() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [decodedUsername, setDecodedUsername] = useState("");
 
+  const fetchMatches = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token || token === "undefined") {
+      console.warn("No token found in localStorage");
+      setLoading(false);
+      return;
+    }
+
+    let username = "";
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      username = decoded.username;
+      setDecodedUsername(decoded.username);
+    } catch (err) {
+      console.error("Failed to decode token", err);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5050/matchdata?username=${username}`
+      );
+      const data = await response.json();
+      console.log("Fetched matches:", data);
+      setMatches(data);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+      setMatches([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMatches = async () => {
-      const token = localStorage.getItem("token");
-
-      if (!token || token === "undefined") {
-        console.warn("No token found in localStorage");
-        setLoading(false);
-        return;
-      }
-
-      let username = "";
-      try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        username = decoded.username;
-        setDecodedUsername(decoded.username);
-      } catch (err) {
-        console.error("Failed to decode token", err);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `http://localhost:5050/matchdata?username=${username}`
-        );
-        const data = await response.json();
-        console.log("Fetched matches:", data);
-        setMatches(data);
-      } catch (error) {
-        console.error("Error fetching matches:", error);
-        setMatches([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchMatches();
   }, []);
 
@@ -141,7 +141,10 @@ export default function MatchTable() {
           {selectedMatch && (
             <MatchStatsTable
               match={selectedMatch}
-              onClose={() => setDialogOpen(false)}
+              onClose={() => {
+                setDialogOpen(false);
+                fetchMatches();
+              }}
             />
           )}
         </DialogContent>

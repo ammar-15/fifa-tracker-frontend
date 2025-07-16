@@ -11,16 +11,11 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar-menu";
 import { useNavigate } from "react-router-dom";
-import {
-  LogOutIcon,
-  HomeIcon,
-  GlobeIcon,
-  UsersIcon,
-  UserIcon,
-} from "lucide-react";
+import { LogOutIcon, HomeIcon, UsersIcon, UserIcon } from "lucide-react";
 import { googleLogout } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
+import GoalIcon from "../assets/goal.svg";
 
 interface DecodedToken {
   userId: string;
@@ -91,7 +86,7 @@ export default function SidebarLayout({
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex h-screen">
+      <div className="flex h-screen w-full">
         <Sidebar side="left" collapsible="icon">
           {" "}
           <SidebarContent>
@@ -134,7 +129,7 @@ export default function SidebarLayout({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={() => navigate("/matches")}>
-                  <GlobeIcon className="h-4 w-4" />
+                  <img src={GoalIcon} alt="Goal" className="h-4 w-4" />
                   <span className="group-data-[collapsible=icon]:hidden">
                     Matches
                   </span>
@@ -173,7 +168,7 @@ export default function SidebarLayout({
           </SidebarContent>
         </Sidebar>
 
-        <SidebarInset className="p-6 overflow-auto">{children}</SidebarInset>
+        <SidebarInset className="p-6 w-full">{children}</SidebarInset>
       </div>
     </SidebarProvider>
   );
