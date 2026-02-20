@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import LoadingScreen from "@/components/loading-screen";
 import StatsTable from "@/components/stats-table";
-import { jwtDecode } from "jwt-decode";
+import { apiFetch } from "@/lib/api";
 
 interface ParsedStat {
   stat: string;
@@ -30,6 +30,12 @@ interface ParsedResult {
   stats: ParsedStat[];
 }
 
+interface AuthMeResponse {
+  user?: {
+    username?: string;
+  };
+}
+
 export default function AddButton({
   onSaveSuccess,
 }: {
@@ -39,17 +45,22 @@ export default function AddButton({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [parsedStats, setParsedStats] = useState<ParsedResult | null>(null);
+  const [loggedInUsername, setLoggedInUsername] = useState("");
 
-  let loggedInUsername = "";
-  const token = localStorage.getItem("token");
-  if (token && token !== "undefined") {
-    try {
-      const decoded = jwtDecode<{ username: string }>(token);
-      loggedInUsername = decoded.username;
-    } catch (err) {
-      console.error("Invalid token:", err);
-    }
-  }
+  useEffect(() => {
+    const loadUsername = async () => {
+      try {
+        const res = await apiFetch("/auth/me", { method: "GET" });
+        if (!res.ok) return;
+        const data = (await res.json()) as AuthMeResponse;
+        setLoggedInUsername(data.user?.username ?? "");
+      } catch {
+        setLoggedInUsername("");
+      }
+    };
+
+    void loadUsername();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -68,30 +79,23 @@ export default function AddButton({
     formData.append("image", file);
 
     try {
-      const res = await fetch("http://localhost:5050/upload", {
+      const res = await apiFetch("/upload", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: formData,
       });
 
       if (!res.ok) throw new Error("Upload failed");
 
-      console.log("Upload successful");
-
       await new Promise((resolve) => setTimeout(resolve, 4000));
 
-      const statsRes = await fetch("http://localhost:5050/parsed", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
+      const statsRes = await apiFetch("/parsed");
       if (!statsRes.ok) throw new Error("Stats fetch failed");
 
-      const json = await statsRes.json();
-      setParsedStats(json.data);
+      const json = (await statsRes.json()) as {
+        data?: ParsedResult;
+        uniqueid?: string;
+      };
+      setParsedStats(json.data ?? null);
 
       if (json.uniqueid) {
         localStorage.setItem("uniqueid", json.uniqueid);
@@ -117,8 +121,8 @@ export default function AddButton({
             {uploading
               ? "Uploading..."
               : parsedStats
-              ? "Match Stats"
-              : "Upload New Match Screenshot"}
+                ? "Match Stats"
+                : "Upload New Match Screenshot"}
           </DialogTitle>
         </DialogHeader>
 
@@ -135,8 +139,8 @@ export default function AddButton({
             <label
               htmlFor="file-upload"
               className={cn(
-                "border border-dashed border-gray-400 rounded-md px-4 py-10 text-center text-sm text-muted-foreground",
-                "hover:bg-muted cursor-pointer transition-all"
+                "cursor-pointer rounded-md border border-dashed border-gray-400 px-4 py-10 text-center text-sm text-muted-foreground",
+                "transition-all hover:bg-muted"
               )}
             >
               {file ? file.name : "Click to upload a photo"}
@@ -150,7 +154,7 @@ export default function AddButton({
             </label>
             <DialogFooter className="pt-4">
               <Button
-                onClick={handleUpload}
+                onClick={() => void handleUpload()}
                 disabled={uploading || !file}
                 className="w-full bg-black text-white hover:bg-black/80"
               >
