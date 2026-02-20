@@ -12,16 +12,17 @@ import {
 } from "@/components/ui/sidebar-menu";
 import { useNavigate } from "react-router-dom";
 import { LogOutIcon, HomeIcon, UsersIcon, UserIcon } from "lucide-react";
-import { googleLogout } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import GoalIcon from "../assets/goal.svg";
+import { useAuth } from "@/auth/useAuth";
+import { apiFetch } from "@/lib/api";
+import { resolveProfilePhotoUrl } from "@/lib/profile-photo";
 
-interface DecodedToken {
-  userId: string;
-  username: string;
-  email: string;
-  exp: number;
+interface AuthMeResponse {
+  user?: {
+    username?: string;
+    email?: string;
+  };
 }
 
 export default function SidebarLayout({
@@ -30,68 +31,76 @@ export default function SidebarLayout({
   children: React.ReactNode;
 }) {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-  let username = "";
-
-  if (token && token !== "undefined") {
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      username = decoded.username;
-    } catch (err) {
-      console.error("Invalid token:", err);
-    }
-  }
-
-  const handleLogout = () => {
-    googleLogout();
-    localStorage.removeItem("token");
-    navigate("/");
-  };
-
+  const { user, loading, logout } = useAuth();
+  const [displayName, setDisplayName] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProfileImage = async () => {
-      const token = localStorage.getItem("token");
+    if (!loading && !user) {
+      navigate("/");
+    }
+  }, [loading, navigate, user]);
 
-      if (!token || token === "undefined") return;
+  useEffect(() => {
+    if (!user) {
+      setDisplayName("");
+      return;
+    }
 
+    const fetchCurrentUser = async () => {
       try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        const userEmail = decoded.email;
+        const res = await apiFetch("/auth/me", { method: "GET" });
+        if (!res.ok) {
+          setDisplayName(user.email ?? "");
+          return;
+        }
+        const data = (await res.json()) as AuthMeResponse;
+        setDisplayName(data.user?.username ?? user.email ?? "");
+      } catch {
+        setDisplayName(user.email ?? "");
+      }
+    };
 
-        const res = await fetch(
-          `http://localhost:5050/userprofile?email=${userEmail}`,
+    void fetchCurrentUser();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.email) {
+      setProfileImage(null);
+      return;
+    }
+
+    const fetchProfileImage = async () => {
+      try {
+        const res = await apiFetch(
+          `/userprofile?email=${encodeURIComponent(user.email ?? "")}`,
           {
             method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
           }
         );
 
         if (!res.ok) throw new Error("Failed to get profile photo");
 
-        const data = await res.json();
-        setProfileImage(data.user.profilePhoto || null);
-        console.log("Sidebar profile image:", data.user.profilePhoto);
+        const data = (await res.json()) as {
+          user?: { profilePhoto?: string | null };
+        };
+        setProfileImage(data.user?.profilePhoto ?? null);
       } catch (err) {
         console.error("Error getting profile image:", err);
         setProfileImage(null);
       }
     };
 
-    fetchProfileImage();
-  }, []);
+    void fetchProfileImage();
+  }, [user?.email]);
 
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full">
         <Sidebar side="left" collapsible="icon">
-          {" "}
           <SidebarContent>
-            <div className="flex items-center m-2 justify-between gap-2">
-              <div className="text-xl ml-1 group-data-[collapsible=icon]:hidden">
+            <div className="m-2 flex items-center justify-between gap-2">
+              <div className="ml-1 text-xl group-data-[collapsible=icon]:hidden">
                 Goalzy
               </div>
               <SidebarTrigger className="my-2 h-5 w-5" />
@@ -102,17 +111,13 @@ export default function SidebarLayout({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {profileImage ? (
-                    <img
-                      src={profileImage}
-                      alt="Profile"
-                      className="h-6 w-6 rounded-full object-cover"
-                    />
-                  ) : (
-                    <UserIcon className="h-5 w-5" />
-                  )}
+                  <img
+                    src={resolveProfilePhotoUrl(profileImage)}
+                    alt="Profile"
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
                   <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">
-                    {username}
+                    {displayName}
                   </span>
                 </div>
               </div>
@@ -155,20 +160,17 @@ export default function SidebarLayout({
 
             <SidebarFooter className="mt-auto">
               <SidebarMenuItem
-                onClick={handleLogout}
-                className="cursor-pointer flex flex-row gap-2 items-center bottom-5"
+                onClick={() => void logout()}
+                className="bottom-5 flex cursor-pointer flex-row items-center gap-2"
               >
                 <LogOutIcon className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  {" "}
-                  Logout
-                </span>
+                <span className="group-data-[collapsible=icon]:hidden">Logout</span>
               </SidebarMenuItem>
             </SidebarFooter>
           </SidebarContent>
         </Sidebar>
 
-        <SidebarInset className="p-6 w-full">{children}</SidebarInset>
+        <SidebarInset className="w-full p-6">{children}</SidebarInset>
       </div>
     </SidebarProvider>
   );

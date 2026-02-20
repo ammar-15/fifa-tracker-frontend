@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import MatchStatsTable from "./matchstats-table";
-import { jwtDecode } from "jwt-decode";
+import { apiFetch } from "@/lib/api";
 
 interface Match {
   uniqueid: string;
@@ -26,14 +26,19 @@ interface Match {
   team2: string;
   team2Goals: string;
   timePlayed: string;
-  stats: any[];
+  stats: ParsedStat[];
 }
 
-interface DecodedToken {
-  userId: string;
-  username: string;
-  email: string;
-  exp: number;
+interface ParsedStat {
+  stat: string;
+  left: string;
+  right: string;
+}
+
+interface AuthMeResponse {
+  user?: {
+    username?: string;
+  };
 }
 
 export default function MatchTable() {
@@ -44,32 +49,26 @@ export default function MatchTable() {
   const [decodedUsername, setDecodedUsername] = useState("");
 
   const fetchMatches = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token || token === "undefined") {
-      console.warn("No token found in localStorage");
-      setLoading(false);
-      return;
-    }
-
-    let username = "";
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      username = decoded.username;
-      setDecodedUsername(decoded.username);
-    } catch (err) {
-      console.error("Failed to decode token", err);
-      setLoading(false);
-      return;
-    }
+    setLoading(true);
 
     try {
-      const response = await fetch(
-        `http://localhost:5050/matchdata?username=${username}`
-      );
-      const data = await response.json();
-      console.log("Fetched matches:", data);
-      setMatches(data);
+      const meRes = await apiFetch("/auth/me", { method: "GET" });
+      if (!meRes.ok) {
+        setMatches([]);
+        return;
+      }
+
+      const meData = (await meRes.json()) as AuthMeResponse;
+      const username = meData.user?.username;
+      if (!username) {
+        setMatches([]);
+        return;
+      }
+
+      setDecodedUsername(username);
+      const response = await apiFetch(`/matchdata?username=${encodeURIComponent(username)}`);
+      const data = (await response.json()) as Match[];
+      setMatches(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching matches:", error);
       setMatches([]);
@@ -79,7 +78,7 @@ export default function MatchTable() {
   };
 
   useEffect(() => {
-    fetchMatches();
+    void fetchMatches();
   }, []);
 
   return (
@@ -143,7 +142,7 @@ export default function MatchTable() {
               match={selectedMatch}
               onClose={() => {
                 setDialogOpen(false);
-                fetchMatches();
+                void fetchMatches();
               }}
             />
           )}
