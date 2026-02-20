@@ -2,13 +2,7 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { apiFetch } from "@/lib/api";
 
 interface ParsedStat {
   stat: string;
@@ -57,14 +51,16 @@ export default function StatsTable({
   onSaveSuccess,
 }: StatsTableProps) {
   const [formData, setFormData] = useState<ParsedResult | null>(null);
-  const [friends, setFriends] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const parsedRes = await fetch("http://localhost:5050/parsed");
-        const parsedJson = await parsedRes.json();
-        const parsed = parsedJson.data as ParsedResult;
+        const parsedRes = await apiFetch("/parsed");
+        const parsedJson = (await parsedRes.json()) as {
+          data: ParsedResult;
+          uniqueid?: string;
+        };
+        const parsed = parsedJson.data;
 
         if (parsedJson.uniqueid) {
           localStorage.setItem("uniqueid", parsedJson.uniqueid);
@@ -83,21 +79,9 @@ export default function StatsTable({
       } catch (err) {
         console.error("Error fetching parsed data:", err);
       }
-
-      try {
-        const friendsRes = await fetch("http://localhost:5050/friendusernames");
-        const friendsJson = await friendsRes.json();
-        if (Array.isArray(friendsJson)) {
-          setFriends(friendsJson);
-        } else {
-          console.warn("Unexpected friends API response:", friendsJson);
-        }
-      } catch (err) {
-        console.error("Failed to fetch friends:", err);
-      }
     };
 
-    fetchData();
+    void fetchData();
   }, [loggedInUsername]);
 
   const handleFieldChange = (field: keyof ParsedResult, value: string) => {
@@ -129,10 +113,9 @@ export default function StatsTable({
     }
 
     try {
-      const res = await fetch("http://localhost:5050/savedata", {
+      const res = await apiFetch("/savedata", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, uniqueid }),
+        body: { ...formData, uniqueid },
       });
 
       const responseJson = await res.json();
@@ -145,11 +128,11 @@ export default function StatsTable({
     }
   };
 
-  if (!formData) return <div className="text-center py-4">Scanning...</div>;
+  if (!formData) return <div className="py-4 text-center">Scanning...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto py-4 flex flex-col md:flex-row gap-8">
-      <div className="flex flex-col gap-4 w-full md:w-3/3">
+    <div className="mx-auto flex max-w-5xl flex-col gap-8 py-4 md:flex-row">
+      <div className="flex w-full flex-col gap-4 md:w-3/3">
         <div className="flex gap-4">
           <Input
             placeholder="Username (Team 1)"
@@ -160,7 +143,7 @@ export default function StatsTable({
           <select
             value={formData.oppUsername}
             onChange={(e) => handleFieldChange("oppUsername", e.target.value)}
-            className="flex-1 border rounded px-2 py-1 text-sm"
+            className="flex-1 rounded border px-2 py-1 text-sm"
           >
             <option value="">Select Opponent</option>
             <option value="akuul15">akuul15</option>
@@ -215,27 +198,27 @@ export default function StatsTable({
               const matched = formData.stats.find((s) => s.stat === stat);
               return (
                 <TableRow key={i} className="h-10">
-                  <TableCell className="text-center w-1/4 p-1">
+                  <TableCell className="w-1/4 p-1 text-center">
                     <Input
                       placeholder="-"
                       value={matched?.left ?? ""}
                       onChange={(e) =>
                         handleStatChange(stat, "left", e.target.value)
                       }
-                      className="w-16 h-7 text-center mx-auto"
+                      className="mx-auto h-7 w-16 text-center"
                     />
                   </TableCell>
-                  <TableCell className="text-center font-medium w-1/2 p-1 text-sm">
+                  <TableCell className="w-1/2 p-1 text-center text-sm font-medium">
                     {stat}
                   </TableCell>
-                  <TableCell className="text-center w-1/4 p-1">
+                  <TableCell className="w-1/4 p-1 text-center">
                     <Input
                       placeholder="-"
                       value={matched?.right ?? ""}
                       onChange={(e) =>
                         handleStatChange(stat, "right", e.target.value)
                       }
-                      className="w-16 h-7 text-center mx-auto"
+                      className="mx-auto h-7 w-16 text-center"
                     />
                   </TableCell>
                 </TableRow>
@@ -243,9 +226,9 @@ export default function StatsTable({
             })}
           </TableBody>
         </Table>
-        <div className="flex justify-end mt-4">
+        <div className="mt-4 flex justify-end">
           <Button
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             className="bg-black text-white hover:bg-black/80"
           >
             Save

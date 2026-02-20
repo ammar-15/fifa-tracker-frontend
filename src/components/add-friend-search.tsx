@@ -1,45 +1,31 @@
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner"; 
-import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 interface User {
   username: string;
   email: string;
 }
 
-interface DecodedToken {
-  userId: string;
-  username: string;
-  email: string;
-  exp: number;
-}
-
-export default function AddFriendSearch() {
+export default function AddFriendSearch({
+  fromUsername,
+}: {
+  fromUsername: string | null;
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<User[]>([]);
-  const [fromUsername, setFromUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token && token !== "undefined") {
-      try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        setFromUsername(decoded.username);
-      } catch (err) {
-        console.error("Failed to decode token:", err);
-        setFromUsername(null);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
-      if (query.length < 2) return setResults([]);
+      if (query.length < 2) {
+        setResults([]);
+        return;
+      }
 
-      const res = await fetch(`http://localhost:5050/searchuser?q=${query}`);
-      const data = await res.json();
+      const res = await apiFetch(`/searchuser?q=${encodeURIComponent(query)}`);
+      const data = (await res.json()) as User[];
       setResults(data);
     }, 300);
 
@@ -48,31 +34,30 @@ export default function AddFriendSearch() {
 
   const sendRequest = async (toUsername: string) => {
     if (!fromUsername) {
-      toast.error("User not logged in or token invalid");
+      toast.error("User not logged in");
       return;
     }
 
-    const res = await fetch("http://localhost:5050/friends/request", {
+    const res = await apiFetch("/friends/request", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from: fromUsername, to: toUsername }),
+      body: { from: fromUsername, to: toUsername },
     });
 
-    let data;
+    let data: { error?: string } | null = null;
     try {
-      data = await res.json();
+      data = (await res.json()) as { error?: string };
     } catch {
       toast.error("Server response was not valid JSON");
       return;
     }
 
     if (!res.ok) {
-      if (data.error === "Already sent") {
+      if (data?.error === "Already sent") {
         toast("Friend request already sent!", {
           description: `You've already sent a request to @${toUsername}`,
         });
       } else {
-        toast.error(data.error || "Failed to send friend request.");
+        toast.error(data?.error || "Failed to send friend request.");
       }
     } else {
       toast.success("Friend request sent!");
@@ -82,15 +67,15 @@ export default function AddFriendSearch() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (query.length >= 2) {
-      const res = await fetch(`http://localhost:5050/searchuser?q=${query}`);
-      const data = await res.json();
+      const res = await apiFetch(`/searchuser?q=${encodeURIComponent(query)}`);
+      const data = (await res.json()) as User[];
       setResults(data);
     }
   };
 
   return (
-    <div className="w-full max-w-md relative mt-5">
-      <form onSubmit={handleSubmit}>
+    <div className="relative mt-5 w-full max-w-md">
+      <form onSubmit={(e) => void handleSubmit(e)}>
         <Input
           placeholder="Search users by username or email..."
           value={query}
@@ -99,17 +84,17 @@ export default function AddFriendSearch() {
       </form>
 
       {results.length > 0 && (
-        <div className="absolute z-50 w-full bg-white border rounded-md shadow-md mt-2">
+        <div className="absolute z-50 mt-2 w-full rounded-md border bg-white shadow-md">
           {results.map((user) => (
             <div
               key={user.email}
-              className="p-4 border-b last:border-none flex justify-between items-center"
+              className="flex items-center justify-between border-b p-4 last:border-none"
             >
               <div>
                 <p className="font-medium">{user.username}</p>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-              <Button size="sm" onClick={() => sendRequest(user.username)}>
+              <Button size="sm" onClick={() => void sendRequest(user.username)}>
                 Add
               </Button>
             </div>

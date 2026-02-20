@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { apiFetch } from "@/lib/api";
 
 interface ParsedStat {
   stat: string;
@@ -71,24 +72,20 @@ export default function MatchStatsTable({
 
   const handleSave = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:5050/matchdata/updatedata",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            uniqueid: formData.uniqueid,
-            stats: formData.stats,
-            username: formData.username,
-            oppUsername: formData.oppUsername,
-            team1: formData.team1,
-            team1Goals: formData.team1Goals,
-            team2: formData.team2,
-            team2Goals: formData.team2Goals,
-            timePlayed: formData.timePlayed,
-          }),
-        }
-      );
+      const response = await apiFetch("/matchdata/updatedata", {
+        method: "POST",
+        body: {
+          uniqueid: formData.uniqueid,
+          stats: formData.stats,
+          username: formData.username,
+          oppUsername: formData.oppUsername,
+          team1: formData.team1,
+          team1Goals: formData.team1Goals,
+          team2: formData.team2,
+          team2Goals: formData.team2Goals,
+          timePlayed: formData.timePlayed,
+        },
+      });
 
       const data = await response.json();
       console.log("Save response:", data);
@@ -99,8 +96,8 @@ export default function MatchStatsTable({
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-4 flex flex-col md:flex-row gap-8">
-      <div className="flex flex-col gap-4 w-full md:w-3/3">
+    <div className="mx-auto flex max-w-5xl flex-col gap-8 py-4 md:flex-row">
+      <div className="flex w-full flex-col gap-4 md:w-3/3">
         <div className="flex gap-4">
           <Input
             placeholder="Username (Team 1)"
@@ -161,27 +158,27 @@ export default function MatchStatsTable({
           <TableBody>
             {formData.stats.map((stat, index) => (
               <TableRow key={index} className="h-10">
-                <TableCell className="text-center w-1/4 p-1">
+                <TableCell className="w-1/4 p-1 text-center">
                   <Input
                     placeholder="-"
                     value={stat.left}
                     onChange={(e) =>
                       handleStatChange(stat.stat, "left", e.target.value)
                     }
-                    className="w-16 h-7 text-center mx-auto"
+                    className="mx-auto h-7 w-16 text-center"
                   />
                 </TableCell>
-                <TableCell className="text-center font-medium w-1/2 p-1 text-sm">
+                <TableCell className="w-1/2 p-1 text-center text-sm font-medium">
                   {stat.stat}
                 </TableCell>
-                <TableCell className="text-center w-1/4 p-1">
+                <TableCell className="w-1/4 p-1 text-center">
                   <Input
                     placeholder="-"
                     value={stat.right}
                     onChange={(e) =>
                       handleStatChange(stat.stat, "right", e.target.value)
                     }
-                    className="w-16 h-7 text-center mx-auto"
+                    className="mx-auto h-7 w-16 text-center"
                   />
                 </TableCell>
               </TableRow>
@@ -189,9 +186,9 @@ export default function MatchStatsTable({
           </TableBody>
         </Table>
 
-        <div className="flex justify-end mt-4">
+        <div className="mt-4 flex justify-end">
           <Button
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             className="bg-black text-white hover:bg-black/80"
           >
             Save Updates

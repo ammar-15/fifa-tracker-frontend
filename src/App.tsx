@@ -6,12 +6,13 @@ import Analytics from "./screens/Analytics";
 import Matches from "./screens/Matches";
 import Friends from "./screens/Friends";
 import User from "./screens/User";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import DebugAuth from "./pages/DebugAuth";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/auth/useAuth";
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_CLIENT_ID!}>
+    <AuthProvider>
       <Router>
         <div>
           <Routes>
@@ -22,11 +23,12 @@ function App() {
             <Route path="/friends" element={<Friends />} />
             <Route path="/user" element={<User />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/debug-auth" element={<DebugAuth />} />
           </Routes>
         </div>
       </Router>
       <Toaster richColors position="top-right" />
-    </GoogleOAuthProvider>
+    </AuthProvider>
   );
 }
 

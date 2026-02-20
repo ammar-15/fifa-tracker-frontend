@@ -3,12 +3,18 @@ import AddFriendSearch from "@/components/add-friend-search";
 import FriendsTable from "@/components/FriendsTable";
 import FriendRequestsTable from "@/components/FriendRequestsTable";
 import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 interface User {
   username: string;
   email: string;
+}
+
+interface AuthMeResponse {
+  user?: {
+    username?: string;
+  };
 }
 
 export default function Friends() {
@@ -16,42 +22,47 @@ export default function Friends() {
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token && token !== "undefined") {
+    const loadUsername = async () => {
       try {
-        const decoded = jwtDecode<{ username: string }>(token);
-        setUsername(decoded.username);
-      } catch (err) {
-        console.error("Failed to decode token:", err);
+        const res = await apiFetch("/auth/me", { method: "GET" });
+        if (!res.ok) return;
+        const data = (await res.json()) as AuthMeResponse;
+        setUsername(data.user?.username ?? null);
+      } catch {
+        setUsername(null);
       }
-    }
+    };
+
+    void loadUsername();
   }, []);
 
   const fetchFriends = async () => {
     if (!username) return;
     try {
-      const res = await fetch(`http://localhost:5050/friends?username=${username}`);
-      const data = await res.json();
-      setFriends(data.friends);
-    } catch (error) {
+      const res = await apiFetch(`/friends?username=${encodeURIComponent(username)}`);
+      const data = (await res.json()) as { friends?: User[] };
+      setFriends(data.friends ?? []);
+    } catch {
       toast.error("Failed to fetch friends");
     }
   };
 
   useEffect(() => {
-    if (username) fetchFriends();
+    if (username) {
+      void fetchFriends();
+    }
   }, [username]);
 
   return (
     <SidebarLayout>
-      <div className="w-full max-w-7xl mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-4">Friends</h1>
-        <div className="flex items-start gap-10 w-full max-w-7xl justify-between mb-4">
+      <div className="mx-auto w-full max-w-7xl px-4">
+        <h1 className="mb-4 text-4xl font-bold">Friends</h1>
+        <div className="mb-4 flex w-full max-w-7xl items-start justify-between gap-10">
           <div className="mb-30 flex-1">
-            <FriendsTable friends={friends} refreshFriends={fetchFriends} />
+            <FriendsTable friends={friends} refreshFriends={fetchFriends} username={username} />
           </div>
-          <div className="w-100 flex-1 mt-15">
-            <AddFriendSearch />
+          <div className="mt-15 w-100 flex-1">
+            <AddFriendSearch fromUsername={username} />
           </div>
         </div>
         <FriendRequestsTable username={username} refreshFriends={fetchFriends} />

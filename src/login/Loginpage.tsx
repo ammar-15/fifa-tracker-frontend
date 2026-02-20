@@ -1,17 +1,13 @@
-import { LoginForm } from "@/components/login-form"
-import { useNavigate } from "react-router-dom"; 
+import { LoginForm } from "@/components/login-form";
 
 function Loginpage() {
-    const navigate = useNavigate();
-    const handleSignupClick = () => {
-        navigate("/signup");
-    };
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm onSignupClick={handleSignupClick} /> 
+        <LoginForm />
       </div>
     </div>
-  )
+  );
 }
+
 export default Loginpage;

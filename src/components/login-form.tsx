@@ -1,7 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogin } from '@react-oauth/google';
 import {
   Card,
   CardContent,
@@ -9,45 +7,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/auth/useAuth";
 
-interface LoginFormProps {
-  onSignupClick: () => void;
-}
-
-export function LoginForm({ onSignupClick }: LoginFormProps) {
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+export function LoginForm() {
+  const { user, loading, loginWithGoogle, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handlesubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    try {
-      const res = await fetch("http://localhost:5050/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "login failed");
-      }
-      console.log("login successful:", data);
-      localStorage.setItem("token", data.access_token);
+  useEffect(() => {
+    if (!loading && user) {
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
-      console.error("login error:", err);
     }
-  };
-
-  //forgot password
+  }, [loading, navigate, user]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,68 +26,25 @@ export function LoginForm({ onSignupClick }: LoginFormProps) {
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>
-            Enter your usernsme or email below to login to your account
+            Sign in with Google to continue.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handlesubmit}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email">Username or Email</Label>
-                <Input
-                  id="identifier"
-                  type="text"
-                  placeholder=""
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-              <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
-                  Login
-                </Button>
-                  <GoogleLogin 
-                    onSuccess={(credentialResponse) => {
-                      console.log(credentialResponse);
-                      navigate("/dashboard");
-                    }}
-                    onError={() => {
-                      console.log("Login Failed");
-                    }}/>
-
-              </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <button
-                onClick={onSignupClick} 
-                className="underline underline-offset-4"
-                style = {{cursor: "pointer" }}
-              >
-                Sign up
-              </button>
-            </div>
-          </form>
+          <div className="flex flex-col gap-3">
+            <Button
+              type="button"
+              className="w-full"
+              disabled={loading}
+              onClick={() => void loginWithGoogle()}
+            >
+              Login with Google
+            </Button>
+            {user && (
+              <Button type="button" variant="outline" onClick={() => void logout()}>
+                Logout
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

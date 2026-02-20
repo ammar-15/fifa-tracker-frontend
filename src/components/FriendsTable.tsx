@@ -7,7 +7,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
 import BinIcon from "@/assets/bin.svg";
 import {
@@ -20,6 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { apiFetch } from "@/lib/api";
 
 interface User {
   username: string;
@@ -29,35 +29,40 @@ interface User {
 interface FriendsTableProps {
   friends: User[];
   refreshFriends: () => void;
+  username: string | null;
 }
 
-export default function FriendsTable({ friends, refreshFriends }: FriendsTableProps) {
+export default function FriendsTable({
+  friends,
+  refreshFriends,
+  username,
+}: FriendsTableProps) {
   const [selectedFriend, setSelectedFriend] = useState<User | null>(null);
 
   const deleteFriend = async (friendEmail: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      const decoded = jwtDecode<{ username: string }>(token!);
-      const username = decoded.username;
+    if (!username) {
+      toast.error("Unable to identify current user");
+      return;
+    }
 
-      const res = await fetch(`http://localhost:5050/friends/remove`, {
+    try {
+      const res = await apiFetch(`/friends/remove`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email: friendEmail }),
+        body: { username, email: friendEmail },
       });
 
       if (!res.ok) throw new Error("Failed to remove friend");
 
       toast.success("Friend removed");
       refreshFriends();
-    } catch (err) {
+    } catch {
       toast.error("Could not remove friend");
     }
   };
 
   return (
     <>
-      <h2 className="text-2xl font-semibold mt-10 mb-2">Your Friends</h2>
+      <h2 className="mb-2 mt-10 text-2xl font-semibold">Your Friends</h2>
       <Table>
         <TableHeader>
           <TableRow>
@@ -76,7 +81,7 @@ export default function FriendsTable({ friends, refreshFriends }: FriendsTablePr
                     <img
                       src={BinIcon}
                       alt="Delete"
-                      className="w-5 h-5 cursor-pointer ml-auto rounded hover:bg-gray-200 transition"
+                      className="ml-auto h-5 w-5 cursor-pointer rounded transition hover:bg-gray-200"
                       onClick={() => setSelectedFriend(friend)}
                     />
                   </AlertDialogTrigger>
