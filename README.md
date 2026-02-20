@@ -1,7 +1,9 @@
-Get Building Module 3 Project
+This project is still under construction. 
 
-WIP....
+Live demo will be conducted on Demo Night 3 on Feb 28th
 
-Goalzy.... coming soon
+Official URL to be hosted on is goalzy.ca
 
-backend: https://github.com/ammar-15/fifa-tracker-backend
+a short teaser of what it will look like:
+
+![/Users/akuul15/repos/ammar-15.github.io/public/videos/goalzy.gif](goalzy.gif)
