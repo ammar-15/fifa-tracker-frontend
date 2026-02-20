@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ArrowRightIcon } from "lucide-react";
-import { jwtDecode } from "jwt-decode";
+import { apiFetch } from "@/lib/api";
 
 const allStats = [
   "Overall Stats",
@@ -28,6 +28,12 @@ const allStats = [
   "Red Cards",
 ];
 
+interface AuthMeResponse {
+  user?: {
+    username?: string;
+  };
+}
+
 export default function AnalyticsGrouped() {
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{
@@ -35,8 +41,7 @@ export default function AnalyticsGrouped() {
     end: Date | null;
   }>({ start: null, end: null });
   const [matchData, setMatchData] = useState([]);
-  const [statData, setStatData] = useState<any>(null);
-  console.log("statData:", statData);
+  const [statData, setStatData] = useState<Record<string, any> | null>(null);
   const [expandedStat, setExpandedStat] = useState<string | null>(null);
   const [overallStatData, setOverallStatData] = useState<{
     labels: string[];
@@ -45,39 +50,37 @@ export default function AnalyticsGrouped() {
 
   const handleFetchAnalytics = async () => {
     if (!selectedFriend || !dateRange.start || !dateRange.end) {
-      console.log("Missing inputs:", {
-        selectedFriend,
-        start: dateRange.start,
-        end: dateRange.end,
-      });
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token || token === "undefined") {
-      console.error("Token not found in localStorage");
-      return;
-    }
+    let username = "";
 
-    let decoded: { username: string };
     try {
-      decoded = jwtDecode(token);
+      const meRes = await apiFetch("/auth/me", { method: "GET" });
+      if (!meRes.ok) {
+        return;
+      }
+
+      const meData = (await meRes.json()) as AuthMeResponse;
+      username = meData.user?.username ?? "";
+
+      if (!username) {
+        return;
+      }
     } catch (err) {
-      console.error("Failed to decode token:", err);
+      console.error("Failed to resolve current user:", err);
       return;
     }
 
-    const username = decoded.username;
-    const query = `friend=${selectedFriend}&username=${username}&start=${dateRange.start.toISOString()}&end=${dateRange.end.toISOString()}`;
-    console.log("Query string:", query);
+    const query = `friend=${encodeURIComponent(selectedFriend)}&username=${encodeURIComponent(username)}&start=${encodeURIComponent(
+      dateRange.start.toISOString()
+    )}&end=${encodeURIComponent(dateRange.end.toISOString())}`;
 
     try {
-      const baseURL = "http://localhost:5050/api";
-
       const [matchesRes, statsRes, overallRes] = await Promise.all([
-        fetch(`${baseURL}/analyticmatches?${query}`),
-        fetch(`${baseURL}/stats?${query}`),
-        fetch(`${baseURL}/overallstats?${query}`),
+        apiFetch(`/api/analyticmatches?${query}`),
+        apiFetch(`/api/stats?${query}`),
+        apiFetch(`/api/overallstats?${query}`),
       ]);
 
       if (!matchesRes.ok)
@@ -92,13 +95,12 @@ export default function AnalyticsGrouped() {
         overallRes.json(),
       ]);
 
-      console.log("Data received:", { matches, stats, overall });
-
       setMatchData(matches);
       setStatData(stats);
       setOverallStatData({
-        labels: overall.labels,
-        datasets: overall.datasets,
+        labels: (overall as { labels: string[] }).labels,
+        datasets: (overall as { datasets: { label: string; data: number[] }[] })
+          .datasets,
       });
     } catch (err) {
       console.error("Failed to fetch analytics data:", err);
@@ -111,9 +113,7 @@ export default function AnalyticsGrouped() {
         <DialogContent className="max-w-4xl p-6">
           {expandedStat && (
             <div>
-              <h2 className="text-2xl font-bold mb-4">
-                {expandedStat} per Match
-              </h2>
+              <h2 className="mb-4 text-2xl font-bold">{expandedStat} per Match</h2>
               <StatsChart
                 stat={expandedStat}
                 data={
@@ -127,23 +127,16 @@ export default function AnalyticsGrouped() {
         </DialogContent>
       </Dialog>
 
-      <div className="gap-5 flex flex-col">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-4">
           <AnalyticsFilter
             onSelect={setSelectedFriend}
             onRangeChange={setDateRange}
           />
-          <Button
-            onClick={() => {
-              console.log("Apply clicked");
-              handleFetchAnalytics();
-            }}
-          >
-            Apply
-          </Button>
+          <Button onClick={() => void handleFetchAnalytics()}>Apply</Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="px-2 py-1">
             <CardContent className="px-2 py-1">
               <MatchesTable matches={matchData} />
@@ -153,11 +146,11 @@ export default function AnalyticsGrouped() {
           {allStats.map((stat) => (
             <Card
               key={stat}
-              className="cursor-pointer transition hover:shadow-md px-2 pt-1"
+              className="cursor-pointer px-2 pt-1 transition hover:shadow-md"
               onClick={() => setExpandedStat(stat)}
             >
-              <CardContent className="p-4 flex flex-col h-full px-2">
-                <div className="flex justify-between items-center mb-2">
+              <CardContent className="flex h-full flex-col p-4 px-2">
+                <div className="mb-2 flex items-center justify-between">
                   <h2 className="text-lg font-semibold">{stat} per Match</h2>
                   <ArrowRightIcon className="h-4 w-4 text-muted-foreground" />
                 </div>
@@ -168,7 +161,7 @@ export default function AnalyticsGrouped() {
                       ? overallStatData
                       : statData?.[stat]
                   }
-                />{" "}
+                />
               </CardContent>
             </Card>
           ))}
